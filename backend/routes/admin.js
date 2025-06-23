@@ -1,11 +1,47 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const Food = require('../models/Food');
 const Order = require('../models/Order');
 const User = require('../models/User');
 const { adminAuth } = require('../middleware/auth');
 
 const router = express.Router();
+
+// Configure multer for image upload
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = 'uploads/foods';
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'food-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  },
+  fileFilter: function (req, file, cb) {
+    const allowedTypes = /jpeg|jpg|png|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'));
+    }
+  }
+});
 
 // Apply admin authentication to all routes
 router.use(adminAuth);
@@ -106,6 +142,40 @@ router.delete('/foods/:id', async (req, res) => {
     }
 
     res.json({ message: 'Food deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Upload food image
+router.post('/foods/:id/image', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No image file provided' });
+    }
+
+    const food = await Food.findById(req.params.id);
+    if (!food) {
+      return res.status(404).json({ message: 'Food not found' });
+    }
+
+    // Delete old image if exists
+    if (food.image && food.image.startsWith('/uploads/')) {
+      const oldImagePath = path.join(__dirname, '..', food.image);
+      if (fs.existsSync(oldImagePath)) {
+        fs.unlinkSync(oldImagePath);
+      }
+    }
+
+    // Update food with new image path
+    food.image = `/uploads/foods/${req.file.filename}`;
+    await food.save();
+
+    res.json({ 
+      message: 'Image uploaded successfully',
+      imageUrl: food.image 
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -306,9 +376,9 @@ router.put('/users/:id/toggle-status', async (req, res) => {
   }
 });
 
-// ===== DASHBOARD STATISTICS =====
+// ===== DASHBOARD =====
 
-// Get dashboard statistics
+// Get dashboard stats
 router.get('/dashboard', async (req, res) => {
   try {
     const today = new Date();
@@ -322,7 +392,7 @@ router.get('/dashboard', async (req, res) => {
     });
 
     // Today's revenue
-    const todayRevenue = await Order.aggregate([
+    const todayRevenueData = await Order.aggregate([
       {
         $match: {
           orderDate: { $gte: today, $lt: tomorrow },
@@ -336,6 +406,7 @@ router.get('/dashboard', async (req, res) => {
         }
       }
     ]);
+    const todayRevenue = todayRevenueData.length > 0 ? todayRevenueData[0].total : 0;
 
     // Pending orders
     const pendingOrders = await Order.countDocuments({
@@ -345,14 +416,15 @@ router.get('/dashboard', async (req, res) => {
     // Total users
     const totalUsers = await User.countDocuments({ role: 'customer' });
 
-    // Low stock items
+    // Low stock items (less than 10 items)
     const lowStockItems = await Food.countDocuments({
-      currentStock: { $lt: 10 }
+      currentStock: { $lt: 10 },
+      isAvailable: true
     });
 
     res.json({
       todayOrders,
-      todayRevenue: todayRevenue[0]?.total || 0,
+      todayRevenue,
       pendingOrders,
       totalUsers,
       lowStockItems

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { Search, Filter, Eye, Clock, CheckCircle, XCircle, Package } from 'lucide-react';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
 const OrderManagement = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -12,6 +14,14 @@ const OrderManagement = () => {
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    // Check for status filter in URL params
+    const statusFromUrl = searchParams.get('status');
+    if (statusFromUrl) {
+      setSelectedStatus(statusFromUrl);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     fetchOrders();

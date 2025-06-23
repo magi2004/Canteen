@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Search, Filter, Plus, Minus, ShoppingCart } from 'lucide-react';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { useCart } from '../../contexts/CartContext';
 
 const Menu = () => {
   const [foods, setFoods] = useState([]);
@@ -10,7 +11,7 @@ const Menu = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [cart, setCart] = useState({});
+  const { cart, addToCart, removeFromCart, getCartTotal } = useCart();
 
   useEffect(() => {
     fetchFoods();
@@ -45,35 +46,8 @@ const Menu = () => {
     fetchFoods();
   }, [searchTerm, selectedCategory]);
 
-  const addToCart = (food) => {
-    setCart(prev => ({
-      ...prev,
-      [food._id]: {
-        ...food,
-        quantity: (prev[food._id]?.quantity || 0) + 1
-      }
-    }));
-    toast.success(`${food.name} added to cart`);
-  };
-
-  const removeFromCart = (foodId) => {
-    setCart(prev => {
-      const newCart = { ...prev };
-      if (newCart[foodId]?.quantity > 1) {
-        newCart[foodId].quantity -= 1;
-      } else {
-        delete newCart[foodId];
-      }
-      return newCart;
-    });
-  };
-
   const getCartItemCount = () => {
     return Object.values(cart).reduce((total, item) => total + item.quantity, 0);
-  };
-
-  const getCartTotal = () => {
-    return Object.values(cart).reduce((total, item) => total + (item.price * item.quantity), 0);
   };
 
   if (loading) return <LoadingSpinner />;
@@ -83,12 +57,12 @@ const Menu = () => {
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Filters and Search */}
         <div className="lg:w-1/4">
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-lg font-semibold mb-4">Filters</h2>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Filters</h2>
             
             {/* Search */}
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">Search</label>
+              <label className="block text-sm font-medium mb-2 dark:text-gray-300">Search</label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
                 <input
@@ -96,18 +70,18 @@ const Menu = () => {
                   placeholder="Search foods..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring focus:border-primary-500"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
               </div>
             </div>
 
             {/* Category Filter */}
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">Category</label>
+              <label className="block text-sm font-medium mb-2 dark:text-gray-300">Category</label>
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:border-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               >
                 <option value="">All Categories</option>
                 {categories.map(category => (
@@ -120,19 +94,19 @@ const Menu = () => {
 
             {/* Cart Summary */}
             {Object.keys(cart).length > 0 && (
-              <div className="border-t pt-4">
-                <h3 className="font-medium mb-2">Cart Summary</h3>
+              <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
+                <h3 className="font-medium mb-2 dark:text-gray-100">Cart Summary</h3>
                 <div className="space-y-2 text-sm">
                   {Object.values(cart).map(item => (
                     <div key={item._id} className="flex justify-between">
-                      <span>{item.name} x{item.quantity}</span>
-                      <span>${(item.price * item.quantity).toFixed(2)}</span>
+                      <span className="dark:text-gray-300">{item.name} x{item.quantity}</span>
+                      <span className="dark:text-gray-300">${(item.price * item.quantity).toFixed(2)}</span>
                     </div>
                   ))}
-                  <div className="border-t pt-2 font-medium">
+                  <div className="border-t border-gray-200 dark:border-gray-600 pt-2 font-medium">
                     <div className="flex justify-between">
-                      <span>Total:</span>
-                      <span>${getCartTotal().toFixed(2)}</span>
+                      <span className="dark:text-gray-100">Total:</span>
+                      <span className="dark:text-gray-100">${getCartTotal().toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -145,7 +119,7 @@ const Menu = () => {
         <div className="lg:w-3/4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {foods.map(food => (
-              <div key={food._id} className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div key={food._id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
                 {food.image && (
                   <img
                     src={food.image}
@@ -154,13 +128,13 @@ const Menu = () => {
                   />
                 )}
                 <div className="p-4">
-                  <h3 className="text-lg font-semibold mb-2">{food.name}</h3>
-                  <p className="text-gray-600 text-sm mb-3">{food.description}</p>
+                  <h3 className="text-lg font-semibold mb-2 dark:text-gray-100">{food.name}</h3>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">{food.description}</p>
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-lg font-bold text-primary-600">
+                    <span className="text-lg font-bold text-primary-600 dark:text-primary-400">
                       ${food.price.toFixed(2)}
                     </span>
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
                       Stock: {food.currentStock}
                     </span>
                   </div>
@@ -171,14 +145,14 @@ const Menu = () => {
                         <>
                           <button
                             onClick={() => removeFromCart(food._id)}
-                            className="p-1 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
+                            className="p-1 rounded-full bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-800"
                           >
                             <Minus size={16} />
                           </button>
-                          <span className="font-medium">{cart[food._id].quantity}</span>
+                          <span className="font-medium dark:text-gray-100">{cart[food._id].quantity}</span>
                           <button
                             onClick={() => addToCart(food)}
-                            className="p-1 rounded-full bg-green-100 text-green-600 hover:bg-green-200"
+                            className="p-1 rounded-full bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-800"
                           >
                             <Plus size={16} />
                           </button>
@@ -201,7 +175,7 @@ const Menu = () => {
 
           {foods.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500">No foods found matching your criteria.</p>
+              <p className="text-gray-500 dark:text-gray-400">No foods found matching your criteria.</p>
             </div>
           )}
         </div>

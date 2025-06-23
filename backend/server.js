@@ -13,10 +13,13 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static files (uploaded images)
+app.use('/uploads', express.static('uploads'));
+
 // MongoDB Connection
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/canteen-app');
+    const conn = await mongoose.connect(process.env.MONGODB_URI);
     console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
     console.error('Error connecting to MongoDB:', error.message);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { 
   Users, 
@@ -6,7 +7,9 @@ import {
   DollarSign, 
   AlertTriangle,
   TrendingUp,
-  Package
+  Package,
+  Plus,
+  Eye
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -14,6 +17,7 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchStats();
@@ -27,6 +31,28 @@ const Dashboard = () => {
       toast.error('Failed to load dashboard stats');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleQuickAction = (action) => {
+    switch (action) {
+      case 'pending-orders':
+        navigate('/admin/orders?status=pending');
+        break;
+      case 'low-stock':
+        navigate('/admin/foods');
+        break;
+      case 'add-food':
+        navigate('/admin/foods');
+        break;
+      case 'view-users':
+        navigate('/admin/users');
+        break;
+      case 'today-sales':
+        navigate('/admin/orders');
+        break;
+      default:
+        break;
     }
   };
 
@@ -73,8 +99,8 @@ const Dashboard = () => {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600">Welcome to the canteen management dashboard</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
+        <p className="text-gray-600 dark:text-gray-400">Welcome to the canteen management dashboard</p>
       </div>
 
       {/* Stats Cards */}
@@ -82,11 +108,11 @@ const Dashboard = () => {
         {statCards.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <div key={index} className="bg-white rounded-lg shadow-md p-6">
+            <div key={index} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{stat.title}</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stat.value}</p>
                 </div>
                 <div className={`p-3 rounded-full ${stat.color} bg-opacity-10`}>
                   <Icon className={`${stat.textColor}`} size={24} />
@@ -99,66 +125,101 @@ const Dashboard = () => {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-semibold mb-4 dark:text-gray-100">Quick Actions</h2>
           <div className="space-y-4">
-            <button className="w-full text-left p-4 border rounded-lg hover:bg-gray-50 transition">
+            <button 
+              className="w-full text-left p-4 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition" 
+              onClick={() => handleQuickAction('pending-orders')}
+            >
               <div className="flex items-center space-x-3">
                 <Package className="text-blue-500" size={20} />
                 <div>
-                  <p className="font-medium">View Pending Orders</p>
-                  <p className="text-sm text-gray-600">Manage orders that need attention</p>
+                  <p className="font-medium dark:text-gray-100">View Pending Orders</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Manage orders that need attention</p>
                 </div>
               </div>
             </button>
             
-            <button className="w-full text-left p-4 border rounded-lg hover:bg-gray-50 transition">
+            <button 
+              className="w-full text-left p-4 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition" 
+              onClick={() => handleQuickAction('low-stock')}
+            >
               <div className="flex items-center space-x-3">
                 <AlertTriangle className="text-red-500" size={20} />
                 <div>
-                  <p className="font-medium">Check Low Stock Items</p>
-                  <p className="text-sm text-gray-600">Review items that need restocking</p>
+                  <p className="font-medium dark:text-gray-100">Check Low Stock Items</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Review items that need restocking</p>
                 </div>
               </div>
             </button>
             
-            <button className="w-full text-left p-4 border rounded-lg hover:bg-gray-50 transition">
+            <button 
+              className="w-full text-left p-4 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition" 
+              onClick={() => handleQuickAction('add-food')}
+            >
+              <div className="flex items-center space-x-3">
+                <Plus className="text-green-500" size={20} />
+                <div>
+                  <p className="font-medium dark:text-gray-100">Add New Food Item</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Add new items to the menu</p>
+                </div>
+              </div>
+            </button>
+            
+            <button 
+              className="w-full text-left p-4 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition" 
+              onClick={() => handleQuickAction('view-users')}
+            >
+              <div className="flex items-center space-x-3">
+                <Eye className="text-purple-500" size={20} />
+                <div>
+                  <p className="font-medium dark:text-gray-100">View All Users</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Manage customer accounts</p>
+                </div>
+              </div>
+            </button>
+            
+            <button 
+              className="w-full text-left p-4 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition" 
+              onClick={() => handleQuickAction('today-sales')}
+            >
               <div className="flex items-center space-x-3">
                 <TrendingUp className="text-green-500" size={20} />
                 <div>
-                  <p className="font-medium">View Today's Sales</p>
-                  <p className="text-sm text-gray-600">Check today's revenue and orders</p>
+                  <p className="font-medium dark:text-gray-100">View Today's Sales</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Check today's revenue and orders</p>
                 </div>
               </div>
             </button>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-4">System Status</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-semibold mb-4 dark:text-gray-100">System Status</h2>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
               <div className="flex items-center space-x-3">
                 <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span className="font-medium">System Online</span>
+                <span className="font-medium dark:text-gray-100">System Online</span>
               </div>
-              <span className="text-sm text-green-600">All systems operational</span>
+              <span className="text-sm text-green-600 dark:text-green-400">All systems operational</span>
             </div>
             
-            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
               <div className="flex items-center space-x-3">
                 <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                <span className="font-medium">Database</span>
+                <span className="font-medium dark:text-gray-100">Database</span>
               </div>
-              <span className="text-sm text-blue-600">Connected</span>
+              <span className="text-sm text-blue-600 dark:text-blue-400">Connected</span>
             </div>
             
-            <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
               <div className="flex items-center space-x-3">
                 <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                <span className="font-medium">Orders</span>
+                <span className="font-medium dark:text-gray-100">Orders</span>
               </div>
-              <span className="text-sm text-yellow-600">{stats?.pendingOrders || 0} pending</span>
+              <span className="text-sm text-yellow-600 dark:text-yellow-400">{stats?.pendingOrders || 0} pending</span>
             </div>
           </div>
         </div>
