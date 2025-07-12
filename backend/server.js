@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const morgan = require('morgan');
 const dotenv = require('dotenv');
 
 // Load environment variables
@@ -9,6 +10,7 @@ dotenv.config();
 const app = express();
 
 // Middleware
+app.use(morgan('dev'));
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
